@@ -1,0 +1,26 @@
+---
+# Standards: 0.2
+galaxy_info:
+  role_name: base_arrow
+  namespace: dockpack
+  author: wabscale
+  description: Apache Arrow libraries for C++
+  company:
+
+  license: MIT
+
+  min_ansible_version: 1.9.0
+
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+  galaxy_tags:
+    - system
+    - development
+    - buildserver
+    - gcc
+
+dependencies: []
+...

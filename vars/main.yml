@@ -1,0 +1,5 @@
+---
+# yamllint disable rule:line-length
+arrow_url: "https://github.com/apache/arrow.git"
+arrow_dest: "arrow_{{ arrow_version | replace('.','_') }}"
+...

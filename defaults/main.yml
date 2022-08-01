@@ -1,0 +1,15 @@
+---
+arrow_version: 8.0.1
+
+toolset: gcc
+arrow_cmake_generator: "Unix Makefiles"
+arrow_cmake_flags:
+  -DARROW_PARQUET=ON
+  -DARROW_CSV=ON
+  -DARROW_BUILD_STATIC=ON
+  -DARROW_BUILD_SHARED=OFF
+  -DARROW_DEPENDENCY_USE_SHARED=OFF
+  -DARROW_DEPENDENCY_SOURCE=BUNDLED
+  -DBOOST_ROOT=/usr/local/lib/cmake/Boost-1.77.0
+  -DARROW_WITH_BROTLI=ON
+  -DARROW_WITH_SNAPPY=ON

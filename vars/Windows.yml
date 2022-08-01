@@ -1,0 +1,11 @@
+---
+# arrow_prefix used for zlib and bzip2 too
+
+target_toolset: "msvc-14.3"
+vs_vars_dir: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Auxiliary\\Build"
+arrow_cmake_generator: "Visual Studio 17 2022"
+arrow_cmake_arch: "64"
+
+arrow_prefix: "C:/Local/arrow_{{ arrow_version | replace('.','_') }}/{{ target_toolset }}_{{ arrow_cmake_arch }}"
+arrow_workdir: "C:/tmp/Arrow"
+...

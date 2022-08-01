@@ -1,0 +1,172 @@
+---
+# yamllint disable rule:line-length
+- name: Include OS-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+  tags: always
+
+- name: Install dependencies
+  yum:
+    state: present
+    name:
+      - make
+      - diffutils
+
+- name: Set llvm_toolset to llvm-toolset-7.0
+  when:
+    - toolset == 'clang'
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version|int == 7
+  set_fact:
+    llvm_toolset: 'llvm-toolset-7.0'
+
+- name: Set llvm_toolset to llvm-toolset
+  when:
+    - toolset == 'clang'
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version|int > 7
+  set_fact:
+    llvm_toolset: 'llvm-toolset'
+
+- name: Display toolset
+  debug:
+    msg: "toolset (gcc or clang): {{ toolset }}"
+
+- name: Ensure directory exists
+  file:
+    path: /root
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+  tags:
+    - base_arrow
+
+- name: Disable software collections on RedHat 8
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version|int > 7
+  set_fact:
+    collections_enabled: false
+
+- name: Display collections_enabled
+  debug:
+    msg: "collections_enabled: {{ collections_enabled }}"
+
+- name: set cmd_end
+  block:
+    - name: When not sourcing devtoolset enable file
+      set_fact:
+        cmd_env: "source /etc/profile && env CC=gcc CXX=g++ "
+
+    - name: Source devtoolset enable file
+      when:
+        - collections_enabled|bool
+        - ansible_os_family == 'RedHat'
+        - ansible_distribution_major_version|int < 8
+        - toolset == 'gcc'
+      set_fact:
+        cmd_env: "source /etc/profile && source /opt/rh/{{ cplusplus_devtoolset }}/enable && env CC=gcc CXX=g++ "
+
+    - name: Source llvm toolset enable file
+      when:
+        - collections_enabled
+        - ansible_os_family == 'RedHat'
+        - ansible_distribution_major_version|int < 8
+        - toolset == 'clang'
+      set_fact:
+        cmd_env: "source /etc/profile && source /opt/rh/{{ llvm_toolset }}/enable && env CC=clang CXX=clang++ "
+  when: cmd_env is undefined
+
+- name: What is my gcc compiler?
+  when: toolset == 'gcc'
+  environment:
+    PATH: '/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/bin:/usr/bin'
+  shell: "{{ cmd_env | default('/bin/true') }} gcc -v"
+  register: gcc_version
+  changed_when: false
+  tags:
+    - skip_ansible_lint
+
+- name: Display details about gcc version
+  when: toolset == 'gcc'
+  debug:
+    msg: "{{ gcc_version.stdout_lines }}"
+
+- name: What is my clang compiler?
+  when: toolset == 'clang'
+  environment:
+    PATH: '/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/bin:/usr/bin'
+  shell: "{{ cmd_env | default('/bin/true') }} clang --version"
+  register: clang_version
+  changed_when: false
+  tags:
+    - skip_ansible_lint
+
+- name: Display details about clang version
+  when: toolset == 'clang'
+  debug:
+    msg: "{{ clang_version.stdout_lines }}"
+
+- name: Download arrow
+  git:
+    repo: "{{ arrow_url }}"
+    dest: "{{ arrow_workdir }}/{{ arrow_dest }}"
+    version: "apache-arrow-{{ arrow_version }}"
+    clone: true
+    depth: 1
+
+- stat: "path={{ arrow_workdir }}/{{ arrow_dest }}/build"
+  register: build_path
+
+- name: Remove previous arrow cmake
+  shell: "rm -rf {{ arrow_workdir }}/{{ arrow_dest }}/build"
+  when: build_path.stat.exists
+  tags:
+    - base_arrow
+    - arrow
+    - skip_ansible_lint
+
+- name: Generate arrow cmake
+  shell:
+    executable: /bin/bash
+    cmd: "source /etc/profile && {{ cmd_env | default('') }} cmake -B build -S {{ arrow_workdir }}/{{ arrow_dest }}/cpp -G \"{{ arrow_cmake_generator }}\" {{ arrow_cmake_flags }}"
+  args:
+    chdir: "{{ arrow_workdir }}/{{ arrow_dest }}"
+  register: arrow_cmake_generate
+  tags:
+    - base_arrow
+    - arrow
+    - skip_ansible_lint
+
+- name: Build arrow cmake
+  shell:
+    executable: /bin/bash
+    cmd: "source /etc/profile && {{ cmd_env | default('') }} cmake --build build -j{{ ansible_processor_vcpus }}"
+  args:
+    chdir: "{{ arrow_workdir }}/{{ arrow_dest }}"
+  register: arrow_cmake_build
+  tags:
+    - base_arrow
+    - arrow
+    - skip_ansible_lint
+
+- name: Install arrow cmake
+  shell:
+    executable: /bin/bash
+    cmd: "source /etc/profile && {{ cmd_env | default('') }} cmake --install build --prefix {{ arrow_prefix }}"
+  args:
+    chdir: "{{ arrow_workdir }}/{{ arrow_dest }}"
+  register: arrow_cmake_install
+  tags:
+    - base_arrow
+    - arrow
+    - skip_ansible_lint
+
+- name: Clean arrow sources
+  shell: "rm -rf {{ arrow_workdir }}"
+  tags:
+    - base_arrow
+    - arrow
+    - skip_ansible_lint
+
+

@@ -1,0 +1,16 @@
+@echo on
+
+SET PATH=C:/Program Files/Git/bin/;C:/Program Files/CMake/bin/;%PATH%
+
+call {{ cmd_env | default("") }}
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+cmake -B build -S {{ arrow_workdir }}/{{ arrow_dest }}/cpp -G "Visual Studio 17 2022" -A x64 {{ arrow_cmake_flags }}
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+cmake --build build -j{{ ansible_processor_vcpus }} --config Release
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+cmake --install build --prefix {{ arrow_prefix }}
+if %errorlevel% neq 0 exit /b %errorlevel%
+
