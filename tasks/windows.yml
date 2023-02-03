@@ -27,6 +27,7 @@
     - skip_ansible_lint
 
 - name: Download arrow
+  # yamllint disable-line rule:line-length
   win_command: "\"C:/Program Files/Git/bin/git.exe\" clone --branch apache-arrow-{{ arrow_version }} --depth 1 {{ arrow_url }} {{ arrow_workdir }}/{{ arrow_dest }}"
 
 - win_stat: "path={{ arrow_workdir }}/{{ arrow_dest }}/build"
@@ -83,5 +84,3 @@
     - base_arrow
     - arrow
     - skip_ansible_lint
-
-
