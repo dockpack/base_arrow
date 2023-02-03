@@ -115,7 +115,8 @@
     clone: true
     depth: 1
 
-- stat: "path={{ arrow_workdir }}/{{ arrow_dest }}/build"
+- name: Check build path
+  stat: "path={{ arrow_workdir }}/{{ arrow_dest }}/build"
   register: build_path
 
 - name: Remove previous arrow cmake
@@ -168,5 +169,3 @@
     - base_arrow
     - arrow
     - skip_ansible_lint
-
-

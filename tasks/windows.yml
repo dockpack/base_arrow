@@ -15,7 +15,8 @@
     - "{{ arrow_prefix }}"
     - "{{ arrow_workdir }}"
 
-- win_stat: "path={{ arrow_workdir }}/{{ arrow_dest }}"
+- name: Check repo path
+  win_stat: "path={{ arrow_workdir }}/{{ arrow_dest }}"
   register: repo_path
 
 - name: Remove previous arrow cmake
@@ -27,9 +28,11 @@
     - skip_ansible_lint
 
 - name: Download arrow
+  # yamllint disable-line rule:line-length
   win_command: "\"C:/Program Files/Git/bin/git.exe\" clone --branch apache-arrow-{{ arrow_version }} --depth 1 {{ arrow_url }} {{ arrow_workdir }}/{{ arrow_dest }}"
 
-- win_stat: "path={{ arrow_workdir }}/{{ arrow_dest }}/build"
+- name: CHeck build path
+  win_stat: "path={{ arrow_workdir }}/{{ arrow_dest }}/build"
   register: build_path
 
 - name: Remove previous arrow cmake
@@ -40,24 +43,30 @@
     - arrow
     - skip_ansible_lint
 
-- set_fact:
+- name: Set vs_vars_dir
+  set_fact:
     vs_vars_dir: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Auxiliary\\Build"
   when: vs_vars_dir is undefined
 
-- block:
-    - set_fact:
+- name: Select msvc version
+  block:
+    - name: Select v140
+      set_fact:
         vs_toolset: "v140"
         cmd_env: "\"{{ vs_vars_dir }}\\vcvars{{ arrow_cmake_arch }}.bat\" -vcvars_ver=14.0"
       when: target_toolset == "msvc-14.0"
-    - set_fact:
+    - name: Select v141
+      set_fact:
         vs_toolset: "v141"
         cmd_env: "\"{{ vs_vars_dir }}\\vcvars{{ arrow_cmake_arch }}.bat\" -vcvars_ver=14.1"
       when: target_toolset == "msvc-14.1"
-    - set_fact:
+    - name: Select v142
+      set_fact:
         vs_toolset: "v142"
         cmd_env: "\"{{ vs_vars_dir }}\\vcvars{{ arrow_cmake_arch }}.bat\" -vcvars_ver=14.2"
       when: target_toolset == "msvc-14.2"
-    - set_fact:
+    - name: Select v143
+      set_fact:
         vs_toolset: "v143"
         cmd_env: "\"{{ vs_vars_dir }}\\vcvars{{ arrow_cmake_arch }}.bat\" -vcvars_ver=14.3"
       when: target_toolset == "msvc-14.3"
@@ -83,5 +92,3 @@
     - base_arrow
     - arrow
     - skip_ansible_lint
-
-
